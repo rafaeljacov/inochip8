@@ -2,7 +2,7 @@
 #include "Arduino.h"
 
 typedef unsigned short u16;
-typedef unsigned char byte;
+typedef unsigned char u8;
 
 class Chip8 {
 public:
@@ -14,7 +14,7 @@ public:
     u16 pop();
     bool *get_display();
     void keypress(unsigned int idx, bool pressed);
-    void load(byte *data, unsigned int size);
+    void load(u8 *data, unsigned int size);
     void reset();
     void tick();
     u16 fetch();
@@ -28,7 +28,7 @@ private:
     static constexpr u16 START_ADDR = 0x200;
 
     static constexpr short FONTSET_SIZE = 80;
-    static constexpr byte FONTSET[] = {
+    static constexpr u8 FONTSET[] = {
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
         0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -48,13 +48,13 @@ private:
     };
 
     u16 pc; // program counter
-    byte ram[RAM_SIZE] = {};
+    u8 ram[RAM_SIZE] = {};
     bool screen[SCREEN_WIDTH * SCREEN_HEIGHT] = {};
-    byte v_reg[NUM_REGS] = {};
+    u8 v_reg[NUM_REGS] = {};
     u16 i_reg;
     u16 sp; // stack pointer
     u16 stack[STACK_SIZE] = {};
     bool keys[NUM_KEYS] = {};
-    byte dt; // delay timer
-    byte st; // sound timer
+    u8 dt; // delay timer
+    u8 st; // sound timer
 };                   
