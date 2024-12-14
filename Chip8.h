@@ -1,34 +1,34 @@
 #pragma once
 #include "Arduino.h"
 
-typedef unsigned short u16;
-typedef unsigned char u8;
+typedef unsigned char byte;
 
 class Chip8 {
 public:
     Chip8();
-    static constexpr u16 SCREEN_WIDTH = 64;
-    static constexpr u16 SCREEN_HEIGHT = 32;
+    static constexpr unsigned short SCREEN_WIDTH = 64;
+    static constexpr unsigned short SCREEN_HEIGHT = 32;
     bool beeping;
-    void push(u16 item);
-    u16 pop();
     bool *get_display();
     void keypress(unsigned int idx, bool pressed);
-    void load(u8 *data, unsigned int size);
+    void load(byte *data, unsigned int size);
     void reset();
     void tick();
-    u16 fetch();
     void tick_timers();
-    void execute(u16 op);
 private:
+    void push(unsigned short item);
+    unsigned short pop();
+    unsigned short fetch();
+    void execute(unsigned short op);
+
     static constexpr short RAM_SIZE = 4096;
     static constexpr short NUM_REGS = 16;
     static constexpr short STACK_SIZE = 16;
     static constexpr short NUM_KEYS = 16;
-    static constexpr u16 START_ADDR = 0x200;
+    static constexpr unsigned short START_ADDR = 0x200;
 
-    static constexpr short FONTSET_SIZE = 80;
-    static constexpr u8 FONTSET[] = {
+    static const short FONTSET_SIZE = 80;
+    const byte FONTSET[FONTSET_SIZE] = {
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
         0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -47,14 +47,14 @@ private:
         0xF0, 0x80, 0xF0, 0x80, 0x80, // F
     };
 
-    u16 pc; // program counter
-    u8 ram[RAM_SIZE] = {};
+    unsigned short pc; // program counter
+    byte ram[RAM_SIZE] = {};
     bool screen[SCREEN_WIDTH * SCREEN_HEIGHT] = {};
-    u8 v_reg[NUM_REGS] = {};
-    u16 i_reg;
-    u16 sp; // stack pointer
-    u16 stack[STACK_SIZE] = {};
+    byte v_reg[NUM_REGS] = {};
+    unsigned short i_reg;
+    unsigned short sp; // stack pointer
+    unsigned short stack[STACK_SIZE] = {};
     bool keys[NUM_KEYS] = {};
-    u8 dt; // delay timer
-    u8 st; // sound timer
+    byte dt; // delay timer
+    byte st; // sound timer
 };                   
