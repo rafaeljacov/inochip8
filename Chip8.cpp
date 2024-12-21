@@ -1,5 +1,8 @@
 #include "Chip8.h"
 #include "Arduino.h"
+// #include <cstddef>
+// #include <cstdio>
+// #include <cstdlib>
 
 typedef unsigned char byte;
 
@@ -11,7 +14,7 @@ Chip8::Chip8() {
     st = 0; // sound timer
 
     // Copy fontset to ram
-    for (int i = 0; i < FONTSET_SIZE; i++) {
+    for (unsigned int i = 0; i < FONTSET_SIZE; i++) {
         ram[i] = FONTSET[i];
     }
 }
@@ -30,17 +33,13 @@ bool* Chip8::get_display() {
     return screen;
 }
 
-void Chip8::keypress(unsigned int idx, bool pressed) {
+void Chip8::keypress(byte idx, bool pressed) {
     keys[idx] = pressed;
 }
 
-void Chip8::load(byte *data, unsigned int size) {
-    unsigned int start = START_ADDR;
-    unsigned int end = START_ADDR + size;
-    
-    for (unsigned int i = start; i < end; i++) {
-        ram[i] = data[i];
-    }
+void Chip8::load_byte(byte data, size_t index) {
+    unsigned int addr = START_ADDR + index;
+    ram[addr] = data;
 } 
 
 void Chip8::reset() {
@@ -114,7 +113,7 @@ void Chip8::execute(unsigned short op) {
     if (digit1 == 0 && digit2 == 0 &&
         digit3 == 0xE && digit4 == 0)
     {
-        for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
+        for (unsigned int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
             screen[i] = false;
         }
     }
@@ -138,17 +137,17 @@ void Chip8::execute(unsigned short op) {
     // 3xkk
     else if (digit1 == 3) {
         byte vx = v_reg[digit2];
-        byte nn = op & 0xFF;
+        byte kk = op & 0xFF;
 
-        if (vx == nn) 
+        if (vx == kk) 
             pc += 2;
     }
     // 4xkk
     else if (digit1 == 4) {
         byte vx = v_reg[digit2];
-        byte nn = op & 0xFF;
+        byte kk = op & 0xFF;
 
-        if (vx != nn) 
+        if (vx != kk) 
             pc += 2;
     }
     // 5xy0
@@ -211,8 +210,9 @@ void Chip8::execute(unsigned short op) {
         byte *vx = &v_reg[digit2];
         byte vy = v_reg[digit3];
 
+        bool borrow = *vx < vy;
         *vx -= vy;
-        v_reg[0xF] = (*vx > vy) ? 1 : 0;
+        v_reg[0xF] = borrow ? 0 : 1;
     }
     // 8xy6
     else if (digit1 == 8 && digit4 == 6) {
@@ -236,7 +236,7 @@ void Chip8::execute(unsigned short op) {
     }
     // 9xy0
     else if (digit1 == 9 && digit4 == 0) {
-        if (v_reg[digit2] == v_reg[digit3])
+        if (v_reg[digit2] != v_reg[digit3])
             pc += 2;
     }
     // Annn
@@ -253,6 +253,7 @@ void Chip8::execute(unsigned short op) {
     else if (digit1 == 0xC) {
         byte kk = op & 0xFF;
         byte rng = random(256);
+        // byte rng = random();
         v_reg[digit2] = rng & kk;
     }
     // Dxyn
@@ -352,5 +353,5 @@ void Chip8::execute(unsigned short op) {
         for (int i = 0; i <= digit2; i++) {
             v_reg[i] = ram[i_reg + i];
         }
-    }
+    } 
 }

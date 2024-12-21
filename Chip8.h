@@ -1,5 +1,6 @@
 #pragma once
 #include "Arduino.h"
+// #include <cstddef>
 
 typedef unsigned char byte;
 
@@ -10,8 +11,8 @@ public:
     static constexpr unsigned short SCREEN_HEIGHT = 32;
     bool beeping;
     bool *get_display();
-    void keypress(unsigned int idx, bool pressed);
-    void load(byte *data, unsigned int size);
+    void keypress(byte idx, bool pressed);
+    void load_byte(byte data, size_t size);
     void reset();
     void tick();
     void tick_timers();
