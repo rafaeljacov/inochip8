@@ -130,7 +130,7 @@ The `Chip8` class implements a subset of the CHIP-8 instruction set. Notable ins
 ---
 
 ## Usage Example
-***Refer to examples folder for a complete real world implementation*** 
+- For a read world implementation, refer to this [example](examples/chip8-esp32.ino).
 ```cpp
 #include "Chip8.h"
 
