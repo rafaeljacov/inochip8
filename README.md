@@ -1,264 +1,180 @@
-# inochip8
-Chip8 Library for Arduino providing the core functions for building a chip8 emulator
-## SAMPLE FRONTEND CODE (using ESP32):
+# Chip8 Library Documentation
+
+## Overview
+`inochip8` is a library implementation of the CHIP-8 virtual machine written in C++ for Arduino. CHIP-8 is an interpreted programming language primarily used to emulate simple games from the 1970s and 1980s. This library provides the necessary components to run CHIP-8 programs, including memory, CPU emulation, input handling, and display management.
+
+---
+
+## Class: `Chip8`
+
+### Public Members
+
+#### Constants
+- **`SCREEN_WIDTH`** *(constexpr unsigned short)*: The width of the CHIP-8 display (64 pixels).
+- **`SCREEN_HEIGHT`** *(constexpr unsigned short)*: The height of the CHIP-8 display (32 pixels).
+
+#### Member Variables
+- **`beeping`** *(bool)*: Indicates whether the sound timer has triggered a beep.
+
+#### Constructor
+- **`Chip8()`**: Initializes the CHIP-8 virtual machine by resetting its state and loading the fontset into memory.
+
+#### Methods
+
+1. **`bool* get_display()`**
+   - Returns a pointer to the `screen` buffer representing the current display state.
+
+2. **`void keypress(byte idx, bool pressed)`**
+   - Updates the state of a specific key.
+   - **Parameters**:
+     - `idx`: The index of the key 0-15 or 0x0 - 0xF (hexadecimal).
+     - `pressed`: `true` if the key is pressed; `false` otherwise.
+
+3. **`void load_byte(byte data, size_t index)`**
+   - Loads a single byte of data into memory at the specified index relative to the program start address.
+   - **Parameters**:
+     - `data`: The byte to load.
+     - `index`: The offset from the program start address.
+
+4. **`void reset()`**
+   - Resets the CHIP-8 virtual machine to its initial state.
+
+5. **`void tick()`**
+   - Executes one instruction cycle by fetching, decoding, and executing the next instruction.
+
+6. **`void tick_timers()`**
+   - Updates the delay and sound timers. Decrements each timer if it is greater than zero. Sets `beeping` to `true` if the sound timer is active.
+
+---
+
+### Private Members
+
+#### Constants
+- **`RAM_SIZE`** *(constexpr short)*: The total size of CHIP-8 memory (4 KB).
+- **`NUM_REGS`** *(constexpr short)*: The number of 8-bit general-purpose registers (16).
+- **`STACK_SIZE`** *(constexpr short)*: The size of the stack (16 levels).
+- **`NUM_KEYS`** *(constexpr short)*: The number of keys in the CHIP-8 keypad (16).
+- **`START_ADDR`** *(constexpr unsigned short)*: The memory address where programs start (0x200).
+- **`FONTSET_SIZE`** *(const short)*: The size of the built-in fontset (80 bytes).
+
+#### Variables
+- **`FONTSET`** *(const byte array)*: The built-in fontset for rendering hexadecimal digits (0-F).
+- **`pc`** *(unsigned short)*: The program counter.
+- **`ram`** *(byte array)*: The CHIP-8 memory.
+- **`screen`** *(bool array)*: The display buffer (2D array flattened to 1D).
+- **`v_reg`** *(byte array)*: The 16 general-purpose registers.
+- **`i_reg`** *(unsigned short)*: The index register.
+- **`sp`** *(unsigned short)*: The stack pointer.
+- **`stack`** *(unsigned short array)*: The call stack.
+- **`keys`** *(bool array)*: The state of the keypad.
+- **`dt`** *(byte)*: The delay timer.
+- **`st`** *(byte)*: The sound timer.
+
+#### Methods
+
+1. **`void push(unsigned short item)`**
+   - Pushes an item onto the stack.
+
+2. **`unsigned short pop()`**
+   - Pops an item from the stack.
+
+3. **`unsigned short fetch()`**
+   - Fetches the next instruction from memory and increments the program counter.
+
+4. **`void execute(unsigned short op)`**
+   - Decodes and executes the given instruction.
+
+---
+
+## CHIP-8 Instruction Set
+The `Chip8` class implements a subset of the CHIP-8 instruction set. Notable instructions include:
+
+- **Display Control**
+  - `00E0`: Clears the screen.
+  - `DXYN`: Draws a sprite at coordinates `(VX, VY)` with a height of `N` pixels.
+
+- **Flow Control**
+  - `00EE`: Returns from a subroutine.
+  - `1NNN`: Jumps to address `NNN`.
+  - `2NNN`: Calls a subroutine at `NNN`.
+
+- **Conditional Execution**
+  - `3XKK`: Skips the next instruction if `VX == KK`.
+  - `4XKK`: Skips the next instruction if `VX != KK`.
+  - `5XY0`: Skips the next instruction if `VX == VY`.
+  - `9XY0`: Skips the next instruction if `VX != VY`.
+
+- **Math Operations**
+  - `8XY0`: Sets `VX = VY`.
+  - `8XY4`: Adds `VY` to `VX` with carry.
+  - `8XY5`: Subtracts `VY` from `VX` with borrow.
+  - `8XY6`: Right shifts `VX` by 1.
+  - `8XYE`: Left shifts `VX` by 1.
+
+- **Timers**
+  - `FX07`: Sets `VX` to the value of the delay timer.
+  - `FX15`: Sets the delay timer to `VX`.
+  - `FX18`: Sets the sound timer to `VX`.
+
+- **Memory**
+  - `ANNN`: Sets `I` to address `NNN`.
+  - `FX1E`: Adds `VX` to `I`.
+  - `FX29`: Sets `I` to the sprite location for the digit stored in `VX`.
+  - `FX33`: Stores the BCD representation of `VX` in memory.
+  - `FX55`: Stores registers `V0` through `VX` in memory starting at address `I`.
+  - `FX65`: Fills registers `V0` through `VX` with values from memory starting at address `I`.
+
+- **Randomization**
+  - `CXKK`: Sets `VX` to a random number ANDed with `KK`.
+
+---
+
+## Usage Example
+***Refer to examples folder for a complete real world implementation*** 
 ```cpp
-
-
-
-// ROMs can be found at https://github.com/kripod/chip8-roms
-#include <Chip8.h>
-#include <Keypad.h>
-#include <SPI.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SH110X.h>
-#include <SD.h>
+#include "Chip8.h"
 
 #define TICKS_PER_FRAME 30
+
 Chip8 chip8;
 
-
-#define SCALE 2
-const byte WINDOW_WIDTH = chip8.SCREEN_WIDTH * SCALE;
-const byte WINDOW_HEIGHT  = chip8.SCREEN_HEIGHT * SCALE;
-const uint16_t SCREEN_LENGTH = chip8.SCREEN_WIDTH * chip8.SCREEN_HEIGHT;
-
-#define OLED_RESET -1
-#define BEEPER 13
-
-#define ROWS 4
-#define COLS 4 
-
-const char hexaKeys[ROWS][COLS] = {
-  {'C', 'D', 'E', 'F'},
-  {'3', '6', '9', 'B'},
-  {'2', '5', '8', '0'},
-  {'1', '4', '7', 'A'}
-};
-
-                   // R1, R2, R3, R4
-byte rowPins[ROWS] = {33, 32, 15, 4}; 
-                  // C1, C2, C3, C4
-byte colPins[COLS] = {25, 26, 27, 14}; 
-Keypad keypad = Keypad(makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
-
-Adafruit_SH1106G display = Adafruit_SH1106G(128, 64, &Wire, OLED_RESET);
-
 void setup() {
-    delay(1500);
-    Serial.begin(9600);
-    Serial.println(F("Setup start..."));
-    pinMode(BEEPER, OUTPUT);
-    keypad.addEventListener(keypadEvent);
-    delay(250); // wait for display to power up
-    display.begin(0x3c, true);
-    display.clearDisplay();
-    if (!SD.begin(SS)) {
-        show_text(10, 26, 1, "SD Card Init Error!");
-        show_text(0, 34, 1, "NOTE: Restart device manually.");
-        display.display();
-        Serial.println("initialization failed. Things to check:");
-        Serial.println("1. is a card inserted?");
-        Serial.println("2. is your wiring correct?");
-        Serial.println("3. did you change the chipSelect pin to match your shield or module?");
-        Serial.println("Note: press reset button on the board and reopen this Serial Monitor after fixing your issue!");
-        tone(BEEPER, 300); while(true);
-    }
-
-    game_select();
-    Serial.println(F("Setup done."));
+    // Load program data into memory
+    chip8.load_byte(0xA2, 0);  // Example opcode
+    chip8.load_byte(0xF0, 1);
+    // NOTE: you will most likely use this by reading from a chip8 rom (.ch8)
+    //       and load each byte using a loop
 }
 
 void loop() {
-    char key = keypad.getKey();
+    // Implement key events handling
 
-    for (int i = 0; i < TICKS_PER_FRAME; i++) {
+    // Run program instructions
+    for (byte i = 0; i < TICKS_PER_FRAME; i++) {
         chip8.tick();
     }
     chip8.tick_timers();
 
     if (chip8.beeping) {
-        tone(BEEPER, 7000, 50);
-    }
-    draw_screen();
-}
-
-void game_select() {
-    File dir = SD.open("/chip8/games");
-    byte filecount = count_files(dir);
-    byte game_index = 0;
-    while (true) {
-        File file = dir.openNextFile();
-        game_index++;
-
-        while (!is_rom(file))
-            file = dir.openNextFile();
-
-        display.clearDisplay();
-        show_text(0, 0, 1, "Select Game:");
-        show_text(98, 0, 1, String(game_index) + "/" + String(filecount));
-        show_text(20, 48, 1, "Top(2) Select(5)");
-        show_text(22, 56, 1, "Next(6) Skip(8)");
-
-        // remove brackets
-        String game_name = file.name();
-        int8_t start = game_name.indexOf('[');
-        int8_t end = game_name.lastIndexOf(']') - start + 2;
-        if (start != -1 && end != -1)
-            game_name.remove(start - 1, end);
-
-        show_text(0, 16, 1, game_name);
-        display.display();
-
-        // wait keypress
-        while (true) {
-            char key = keypad.getKey();
-            if (key == '2') {
-                dir.rewindDirectory();
-                game_index = 0;
-                break;
-            } else if (key == '5') {
-                load_file(file);
-                return;
-            } else if (key == '6') {
-                if (game_index == filecount) {
-                    dir.rewindDirectory();
-                    game_index = 0;
-                }
-                break;
-            } else if (key == '8') {
-                for (byte i = 0; i < 9; i++) {
-                    if (game_index != filecount) {
-                        file = dir.openNextFile();
-                        game_index++;
-                    } else {
-                        dir.rewindDirectory();
-                        game_index = 0;
-                    }
-                }
-                break;
-            }
-        }
-
-    }
-}
-
-void load_file(File rom) {
-    // load rom to chip8 memory
-    uint16_t bytes_read = 0;
-    while (rom.available()) {
-        byte data = rom.read();
-        chip8.load_byte(data, bytes_read++);
-    }
-    rom.close();
-
-    if (bytes_read == 0) {
-        Serial.println(F("ROM not loaded! Restart device manually."));
-        tone(BEEPER, 300); while(true);
+        // Trigger sound
     }
 
-    Serial.println(F("ROM loaded."));
-    Serial.print(bytes_read);
-    Serial.println(F(" bytes read."));
-}
+    bool* display = chip8.get_display();
+    // Render display buffer to screen
 
-void draw_screen() {
-    bool *screen_buf = chip8.get_display();
-    display.clearDisplay();
-    for (unsigned int i = 0; i < SCREEN_LENGTH; i++) {
-        if (screen_buf[i]) {
-            unsigned int x = i % chip8.SCREEN_WIDTH;
-            unsigned int y = i / chip8.SCREEN_WIDTH;
-            // draw white filled square
-            display.fillRect(x * SCALE, y * SCALE, SCALE, SCALE, SH110X_WHITE);
-        }
-    }
-    display.display();
-}
-
-byte count_files(File dir) {
-    if (!dir.isDirectory())
-        return 0;
-
-    byte count = 0;
-    while (true) {
-        File entry = dir.openNextFile();
-        if (!entry) {
-            dir.rewindDirectory();
-            return count;
-        }
-
-        if (!entry.isDirectory() && is_rom(entry)) {
-            count++;
-        }
-    }
-}
-
-// verify if the file ext is ".ch8"
-bool is_rom(File file) {
-    String name = file.name();
-    int8_t dot_index = name.lastIndexOf('.');
-    if (dot_index != -1) {
-        return (name[dot_index + 1] == 'c') && (name[dot_index + 2] == 'h') && (name[dot_index + 3] == '8');
-    } else
-        return false;
-}
-
-void show_text(byte x, byte y, byte text_size, String text) {
-    display.setTextColor(SH110X_WHITE);
-    display.setCursor(x, y);
-    display.setTextSize(text_size);
-    display.print(text);
-}
-
-void keypadEvent(KeypadEvent key){
-    KeyState key_state = keypad.getState();
-
-    if (key) {
-        byte key_code = get_key_code(key);
-
-        if (key_state == PRESSED) {
-            chip8.keypress(key_code, true);
-        } else if (key_state == RELEASED) {
-            chip8.keypress(key_code, false);
-        }
-    }
-}
-
-byte get_key_code(char key) {
-    switch (key) {
-        case '1':
-            return 0x1;
-        case '2':
-            return 0x2;
-        case '3':
-            return 0x3;
-        case '4':
-            return 0x4;
-        case '5':
-            return 0x5;
-        case '6':
-            return 0x6;
-        case '7':
-            return 0x7;
-        case '8':
-            return 0x8;
-        case '9':
-            return 0x9;
-        case '0':
-            return 0x0;
-        case 'A':
-            return 0xA;
-        case 'B':
-            return 0xB;
-        case 'C':
-            return 0xC;
-        case 'D':
-            return 0xD;
-        case 'E':
-            return 0xE;
-        case 'F':
-            return 0xF;
-    }
 }
 ```
+
+---
+
+## Notes
+- Ensure a valid CHIP-8 program is loaded starting at address `0x200`.
+- This library assumes a consistent 60 Hz update rate for the timers.
+- The display buffer is a linearized array of size `SCREEN_WIDTH * SCREEN_HEIGHT`.
+
+---
+
+## Limitations
+- Designed for Arduino platforms with sufficient memory and performance (This library alone can take about 8kb of SRAM, tried it on Arduino Mega and regretted it).
+- Does not include advanced debugging tools or error handling for invalid instructions.
+
