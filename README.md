@@ -1,4 +1,4 @@
-# Chip8 Library Documentation
+# Documentation
 
 ## Overview
 `inochip8` is a library implementation of the CHIP-8 virtual machine written in C++ for Arduino. CHIP-8 is an interpreted programming language primarily used to emulate simple games from the 1970s and 1980s. This library provides the necessary components to run CHIP-8 programs, including memory, CPU emulation, input handling, and display management.
